@@ -1,0 +1,29 @@
+Szanowni Państwo,
+
+Zwracam się z uprzejmą prośbą o przyznanie Klucza Użytkownika (SID) umożliwiającego korzystanie z usługi BIR1 – interfejsu API rejestru REGON.
+
+Przekazuję wymagane dane:
+
+Pełna nazwa podmiotu: [NAZWA FIRMY]
+Numer REGON podmiotu: [REGON]
+Imię i nazwisko osoby do kontaktu: [IMIĘ I NAZWISKO]
+Adres e-mail osoby do kontaktu: [EMAIL]
+Numer telefonu kontaktowego: [NR.TEL] 
+
+Adresy IP, z których będą wykonywane połączenia:
+Korzystam z platformy automatyzacji Make.com i cloudflare.com, która realizuje połączenia z własnej infrastruktury chmurowej. Połączenia będą wykonywane z dynamicznych adresów IP.
+
+Przybliżona liczba jednoczesnych użytkowników:
+1 użytkownik.
+
+Dane będą wykorzystywane wyłącznie do automatycznego pobierania informacji o przedsiębiorcach na potrzeby wystawiania faktur.  
+
+Proszę o przyznanie dostępu do środowiska produkcyjnego oraz przekazanie Klucza Użytkownika (SID).
+
+Z poważaniem,
+[IMIĘ I NAZWISKO],
+[NAZWA FIRMY].
+
+
+
+
