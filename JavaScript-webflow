@@ -1,0 +1,98 @@
+<div style="margin:40px 0; padding:25px; border:2px solid #0066ff; border-radius:14px; background:#f8fbff; font-family:system-ui,Arial,sans-serif;">
+  <h3 style="margin:0 0 20px; color:#0066ff;">Pobierz dane firmy z GUS</h3>
+  
+  <div style="display:flex; gap:10px; flex-wrap:wrap; align-items:end;">
+    <div>
+      <label style="display:block; font-weight:bold; margin-bottom:5px;">NIP lub fragment nazwy firmy:</label>
+      <input id="search-input" type="text" placeholder="np. 7171642051 lub Allegro" 
+             style="padding:12px; width:320px; border:2px solid #0066ff; border-radius:8px; font-size:16px;">
+    </div>
+    <button id="search-btn" style="padding:12px 24px; background:#0066ff; color:white; border:none; border-radius:8px; cursor:pointer; font-size:16px;">
+      Szukaj w GUS
+    </button>
+  </div>
+
+  <div id="results" style="margin-top:20px; max-height:300px; overflow-y:auto; display:none;"></div>
+  <div id="status" style="margin-top:15px; font-weight:bold;"></div>
+</div>
+
+<script>
+const API_URL = "https://auto********************************************************************************************************************************************rs.dev"; // Twój worker
+
+document.getElementById("search-btn").addEventListener("click", async () => {
+  const query = document.getElementById("search-input").value.trim().replace(/[-\s]/g, "");
+  const status = document.getElementById("status");
+  const resultsDiv = document.getElementById("results");
+  const btn = document.getElementById("search-btn");
+  const oldText = btn.innerHTML;
+
+  if (!query) { status.innerHTML = "<span style='color:red;'>Wpisz NIP lub nazwę</span>"; return; }
+
+  btn.disabled = true; btn.innerHTML = "Szukam..."; status.innerHTML = ""; resultsDiv.style.display = "none";
+
+  try {
+    const isNip = /^\d{10}$/.test(query);
+    const endpoint = isNip ? `${API_URL}/nip?nip=${query}` : `${API_URL}/nazwa?nazwa=${encodeURIComponent(query)}`;
+    
+    const res = await fetch(endpoint);
+    const data = await res.json();
+
+    if (!data || data.error) {
+      status.innerHTML = `<span style="color:red;">${data?.error || "Brak wyników"}</span>`;
+      return;
+    }
+
+    // Jeśli to pojedyncza firma (po NIP)
+    if (data.success && data.nip) {
+      fillForm(data);
+      status.innerHTML = '<span style="color:green;">Dane uzupełnione!</span>';
+      return;
+    }
+
+    // Jeśli wiele wyników (po nazwie) – pokazujemy listę
+    if (Array.isArray(data)) {
+      resultsDiv.style.display = "block";
+      resultsDiv.innerHTML = "<strong>Wybierz firmę:</strong><br><br>" + 
+        data.slice(0, 15).map(f => `
+          <div onclick="selectFirm('${f.nip}')" 
+               style="padding:12px; margin:6px 0; background:white; border:1px solid #ddd; border-radius:8px; cursor:pointer;">
+            <strong>${f.name}</strong><br>
+            <small>NIP: ${f.nip} | REGON: ${f.regon} | ${f.address.city}</small>
+          </div>
+        `).join("");
+    }
+
+  } catch (e) {
+    status.innerHTML = '<span style="color:red;">Błąd serwera – spróbuj za chwilę</span>';
+  } finally {
+    btn.disabled = false; btn.innerHTML = oldText;
+  }
+});
+
+// Kliknięcie w firmę z listy
+async function selectFirm(nip) {
+  const status = document.getElementById("status");
+  status.innerHTML = "Pobieram pełne dane...";
+  const res = await fetch(`${API_URL}/nip?nip=${nip}`);
+  const data = await res.json();
+  fillForm(data);
+  document.getElementById("results").style.display = "none";
+  status.innerHTML = '<span style="color:green;">Gotowe!</span>';
+}
+
+// Wypełnianie Twoich pól w formularzu Webflow
+function fillForm(d) {
+  const set = (id, val) => { const el = document.getElementById(id); if (el) el.value = val || ""; };
+
+  set("1", d.nip);                                          // NIP (opcjonalnie)
+  set("2", d.name || d.shortName || "");                    // pełna nazwa
+  set("3", [d.address.street, d.address.number, d.address.city].filter(Boolean).join(" "));
+  set("4", d.address.postal || "");
+
+  // DODATKOWE POLA – jeśli masz w formularzu (po prostu dodajesz kolejne ID)
+  // set("regon-field", d.regon);
+  // set("pkd-field", d.pkd);
+  // set("wojewodztwo", d.province);
+  // itd.
+}
+</script>
