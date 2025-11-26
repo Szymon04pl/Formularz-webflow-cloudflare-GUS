@@ -1,0 +1,40 @@
+export default {
+  async fetch(request) {
+    // CORS – musi być!
+    const corsHeaders = {
+      "Access-Control-Allow-Origin": "*",
+      "Access-Control-Allow-Methods": "GET, OPTIONS",
+      "Access-Control-Allow-Headers": "Content-Type",
+    };
+
+    // Preflight
+    if (request.method === "OPTIONS") {
+      return new Response(null, { headers: corsHeaders });
+    }
+
+    const url = new URL(request.url);
+    const nip = url.searchParams.get("nip")?.trim() || "brak";
+
+    // ZAWSZE zwracamy te same, poprawne dane (zero logiki)
+    const staticResponse = {
+      success: true,
+      nip: nip,
+      name: "TESTOWA FIRMA SPÓŁKA Z OGRANICZONĄ ODPOWIEDZIALNOŚCIĄ",
+      regon: "123456785",
+      address: {
+        street: "Testowa",
+        number: "42",
+        city: "Warszawa",
+        postal: "00-950"
+      }
+    };
+
+    return new Response(JSON.stringify(staticResponse), {
+      status: 200,
+      headers: {
+        "Content-Type": "application/json",
+        ...corsHeaders
+      }
+    });
+  }
+};
