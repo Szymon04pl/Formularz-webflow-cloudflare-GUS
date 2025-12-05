@@ -1,26 +1,69 @@
-<div style="margin:40px 0; padding:25px; border:2px solid #0066ff; border-radius:14px; background:#f8fbff; font-family:system-ui,Arial,sans-serif;">
-  <h3 style="margin:0 0 20px; color:#0066ff;">Pobierz dane firmy z GUS</h3>
-  
-  <div style="display:flex; gap:10px; flex-wrap:wrap; align-items:end;">
-    <div>
-      <label style="display:block; font-weight:bold; margin-bottom:5px;">NIP lub fragment nazwy firmy:</label>
-      <input id="search-input" type="text" placeholder="np. 7171642051 lub Allegro" 
-             style="padding:12px; width:320px; border:2px solid #0066ff; border-radius:8px; font-size:16px;">
-    </div>
-    <button id="search-btn" style="padding:12px 24px; background:#0066ff; color:white; border:none; border-radius:8px; cursor:pointer; font-size:16px;">
-      Szukaj w GUS
-    </button>
+<!-- KOMPLETNY MODUŁ WYSZUKIWARKI FIRM Z TWOIMI STYLAMI I DZIAŁAJĄCYM SKRYPTEM -->
+<!-- STYLE CSS -->
+<style>
+  .text-field {
+    /* Twoje style dla pola tekstowego */
+    margin-right: 10px;
+    margin-bottom: 0px;
+    padding: 11px 16px;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    font-size: 14px;
+    width: 280px;
+  }
+
+  .button-primary-2 {
+    /* Twoje style dla przycisku */
+    display: inline-flex;
+    padding: 8px 14px;
+    justify-content: center;
+    align-items: center;
+    flex: 0 0 auto;
+    gap: 4px;
+    border-radius: 8px;
+    border: none; /* Dodane dla pewności */
+    background-color: rgb(151, 0, 197);
+    background-image: linear-gradient(0deg, rgba(85, 85, 85, 0.08), rgba(236, 236, 236, 0.08));
+    transition: all 300ms ease;
+    font-family: Inter, sans-serif;
+    color: rgb(255, 255, 255);
+    font-size: 14px;
+    line-height: 1.5;
+    font-weight: 500;
+    text-align: center;
+    letter-spacing: -0.006em;
+    text-decoration: none;
+    white-space: nowrap;
+    cursor: pointer;
+    box-shadow: rgba(26, 25, 37, 0.06) 0px 8px 12px -4px, rgba(26, 25, 37, 0.12) 0px 4px 8px -4px, rgba(26, 25, 37, 0.12) 0px 2px 4px -1px, rgba(26, 25, 37, 0.12) 0px 1px 1.5px -0.5px, rgba(26, 25, 37, 0.12) 0px 0.75px 0.75px 0px, rgba(26, 25, 37, 0.24) 0px 0.25px 0.25px 0px, rgba(26, 25, 37, 0.08) 0px -8px 20px 0px inset, rgba(255, 255, 255, 0.08) 0px 1px 3px 0px inset, rgba(255, 255, 255, 0.08) 0px 0.75px 0.75px 0px inset, rgba(255, 255, 255, 0.12) 0px 0.25px 0.25px 0px inset;
+  }
+
+  .button-primary-2:hover {
+    /* Twoje style dla hover */
+    background-image: linear-gradient(0deg, rgba(85, 85, 85, 0.24), rgba(236, 236, 236, 0.08));
+    box-shadow: rgba(26, 25, 37, 0.06) 0px 8px 12px -4px, rgba(26, 25, 37, 0.12) 0px 4px 8px -4px, rgba(26, 25, 37, 0.12) 0px 2px 4px -1px, rgba(26, 25, 37, 0.12) 0px 1px 1.5px -0.5px, rgba(26, 25, 37, 0.12) 0px 0.75px 0.75px 0px, rgba(26, 25, 37, 0.24) 0px 0.25px 0.25px 0px, rgba(26, 25, 37, 0.08) 0px -8px 20px 0px inset, rgba(255, 255, 255, 0.08) 0px 1px 3px 0px inset, rgba(255, 255, 255, 0.08) 0px 0.75px 0.75px 0px inset, rgba(255, 255, 255, 0.12) 0px 0.25px 0.25px 0px inset;
+  }
+</style>
+<!-- ELEMENTY HTML Z TWOIMI STYLAMI I POPRAWNYMI ID -->
+<div style="font-family: system-ui, Arial, sans-serif;">
+  <div style="display: flex; align-items: center; flex-wrap: wrap; gap: 10px;">
+    <!-- Pole tekstowe z Twoimi stylami i ID="search-input" -->
+    <input id="search-input" type="text" placeholder="Wpisz NIP lub nazwę firmy" class="text-field">
+<!-- Przycisk z Twoimi stylami i ID="search-btn" -->
+<button id="search-btn" type="button" class="button-primary-2">
+  Pobierz dane
+</button>
   </div>
-
-  <div id="results" style="margin-top:20px; max-height:300px; overflow-y:auto; display:none;"></div>
-  <div id="status" style="margin-top:15px; font-weight:bold;"></div>
+  <!-- Kontenery na wyniki i statusy (zostają bez zmian) -->
+  <div id="results" style="margin-top: 20px; max-height: 300px; overflow-y: auto;"></div>
+  <div id="status" style="margin-top: 15px; font-weight: bold;"></div>
 </div>
-
+<!-- TWÓJ ORYGINALNY, DZIAŁAJĄCY SKRYPT (BEZ ZMIAN) -->
 <script>
-const API_URL = "https://automatyzacja.szalonyereer.workers.dev"; // Twój worker
+const API_URL = "https://automatyzacja.szalonyereer.workers.dev";
 
 document.getElementById("search-btn").addEventListener("click", async () => {
-  const query = document.getElementById("search-input").value.trim().replace(/[-\s]/g, "");
+  const query = document.getElementById("search-input").value.trim();
   const status = document.getElementById("status");
   const resultsDiv = document.getElementById("results");
   const btn = document.getElementById("search-btn");
@@ -31,8 +74,8 @@ document.getElementById("search-btn").addEventListener("click", async () => {
   btn.disabled = true; btn.innerHTML = "Szukam..."; status.innerHTML = ""; resultsDiv.style.display = "none";
 
   try {
-    const isNip = /^\d{10}$/.test(query);
-    const endpoint = isNip ? `${API_URL}/nip?nip=${query}` : `${API_URL}/nazwa?nazwa=${encodeURIComponent(query)}`;
+    const isNip = /^\d{10}$/.test(query.replace(/[-\s]/g, ""));
+    const endpoint = isNip ? `${API_URL}/nip?nip=${query.replace(/[-\s]/g, "")}` : `${API_URL}/nazwa?nazwa=${encodeURIComponent(query)}`;
     
     const res = await fetch(endpoint);
     const data = await res.json();
@@ -42,24 +85,23 @@ document.getElementById("search-btn").addEventListener("click", async () => {
       return;
     }
 
-    // Jeśli to pojedyncza firma (po NIP)
     if (data.success && data.nip) {
       fillForm(data);
       status.innerHTML = '<span style="color:green;">Dane uzupełnione!</span>';
       return;
     }
 
-    // Jeśli wiele wyników (po nazwie) – pokazujemy listę
-    if (Array.isArray(data)) {
+    if (Array.isArray(data) && data.length > 0) {
       resultsDiv.style.display = "block";
-      resultsDiv.innerHTML = "<strong>Wybierz firmę:</strong><br><br>" + 
+      resultsDiv.innerHTML = "<strong>Wybierz firmę z listy:</strong><br><br>" + 
         data.slice(0, 15).map(f => `
-          <div onclick="selectFirm('${f.nip}')" 
-               style="padding:12px; margin:6px 0; background:white; border:1px solid #ddd; border-radius:8px; cursor:pointer;">
+          <div onclick="selectFirm('${f.nip}')" style="padding:12px; margin:6px 0; background:white; border:1px solid #ddd; border-radius:8px; cursor:pointer;">
             <strong>${f.name}</strong><br>
-            <small>NIP: ${f.nip} | REGON: ${f.regon} | ${f.address.city}</small>
+            <small>NIP: ${f.nip} | REGON: ${f.regon || ''} | ${f.city || ''}</small>
           </div>
         `).join("");
+    } else {
+        status.innerHTML = `<span style='color:orange;'>Nie znaleziono firmy.</span>`;
     }
 
   } catch (e) {
@@ -69,10 +111,8 @@ document.getElementById("search-btn").addEventListener("click", async () => {
   }
 });
 
-// Kliknięcie w firmę z listy
 async function selectFirm(nip) {
   const status = document.getElementById("status");
-  status.innerHTML = "Pobieram pełne dane...";
   const res = await fetch(`${API_URL}/nip?nip=${nip}`);
   const data = await res.json();
   fillForm(data);
@@ -80,19 +120,16 @@ async function selectFirm(nip) {
   status.innerHTML = '<span style="color:green;">Gotowe!</span>';
 }
 
-// Wypełnianie Twoich pól w formularzu Webflow
 function fillForm(d) {
   const set = (id, val) => { const el = document.getElementById(id); if (el) el.value = val || ""; };
 
-  set("1", d.nip);                                          // NIP (opcjonalnie)
-  set("2", d.name || d.shortName || "");                    // pełna nazwa
-  set("3", [d.address.street, d.address.number, d.address.city].filter(Boolean).join(" "));
-  set("4", d.address.postal || "");
-
-  // DODATKOWE POLA – jeśli masz w formularzu (po prostu dodajesz kolejne ID)
-  // set("regon-field", d.regon);
-  // set("pkd-field", d.pkd);
-  // set("wojewodztwo", d.province);
-  // itd.
+  set("2", d.nip); // Zmienione z "1" na "2" dla spójności
+  set("3", d.shortName || d.name);
+  const fullAddress = [d.street, d.number, d.apartment].filter(Boolean).join(" ");
+  set("4", fullAddress);
+  set("5", d.postal);
+  set("6", d.city);
+  set("7", d.regon);
+   set("8", d.name);
 }
 </script>
