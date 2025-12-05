@@ -1,35 +1,52 @@
 export default {
   async fetch(request) {
-    // CORS – musi być!
     const corsHeaders = {
       "Access-Control-Allow-Origin": "*",
       "Access-Control-Allow-Methods": "GET, OPTIONS",
       "Access-Control-Allow-Headers": "Content-Type",
     };
 
-    // Preflight
     if (request.method === "OPTIONS") {
       return new Response(null, { headers: corsHeaders });
     }
 
     const url = new URL(request.url);
-    const nip = url.searchParams.get("nip")?.trim() || "brak";
+    const query = url.searchParams.get("nip") || url.searchParams.get("nazwa") || "";
 
-    // ZAWSZE zwracamy te same, poprawne dane (zero logiki)
-    const staticResponse = {
+    // Domyślne dane dla firmy (np. spółki)
+    let responseData = {
       success: true,
-      nip: nip,
-      name: "TESTOWA FIRMA SPÓŁKA Z OGRANICZONĄ ODPOWIEDZIALNOŚCIĄ",
-      regon: "123456785",
-      address: {
-        street: "Testowa",
-        number: "42",
-        city: "Warszawa",
-        postal: "00-950"
-      }
+      nip: "7571496794",
+      name: "Jan Kowalski",
+      shortName: "Usługi optyczne optis",
+      ownerFirstName: "", // Puste dla spółki
+      ownerLastName: "",  // Puste dla spółki
+      street: "Innowacyjna",
+      number: "15",
+      city: "Warszawa",
+      postal: "02-200"
     };
 
-    return new Response(JSON.stringify(staticResponse), {
+    // Jeśli w zapytaniu jest "Jan", symulujemy dane dla JDG
+    if (query.toLowerCase().includes("jan")) {
+      responseData = {
+        success: true,
+        nip: "7571496794",
+        name: "Jan Kowalski",
+        shortName: "Usługi optyczne optis",
+        ownerFirstName: "Jan",     // Imię właściciela
+        ownerLastName: "Kowalski", // Nazwisko właściciela
+        street: "Wirtualna",
+        number: "42",
+        city: "Gdańsk",
+        postal: "80-800"
+      };
+    }
+
+    // Symulujemy opóźnienie
+    await new Promise(res => setTimeout(res, 400));
+
+    return new Response(JSON.stringify(responseData), {
       status: 200,
       headers: {
         "Content-Type": "application/json",
