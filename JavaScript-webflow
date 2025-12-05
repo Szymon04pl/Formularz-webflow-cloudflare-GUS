@@ -17,7 +17,7 @@
 </div>
 
 <script>
-const API_URL = "https://auto********************************************************************************************************************************************rs.dev"; // Twój worker
+const API_URL = "https://automatyzacja.szalonyereer.workers.dev"; // Twój worker
 
 document.getElementById("search-btn").addEventListener("click", async () => {
   const query = document.getElementById("search-input").value.trim().replace(/[-\s]/g, "");
