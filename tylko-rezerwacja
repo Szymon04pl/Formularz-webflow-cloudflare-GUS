@@ -1,0 +1,1425 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>System Rezerwacji</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    :root {
+      --primary: 221 83% 53%;
+      --primary-foreground: 210 40% 98%;
+      --destructive: 0 72% 51%;
+      --muted: 210 40% 96.1%;
+      --muted-foreground: 215.4 16.3% 46.9%;
+      --border: 214.3 31.8% 91.4%;
+      --background: 0 0% 100%;
+      --foreground: 222.2 47.4% 11.2%;
+      --card: 0 0% 100%;
+      --accent: 210 40% 96.1%;
+      --radius: 0.5rem;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', sans-serif;
+      background: hsl(var(--background));
+      color: hsl(var(--foreground));
+      line-height: 1.5;
+    }
+
+    .reservation-container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 2rem 1rem;
+    }
+
+    .reservation-header {
+      text-align: center;
+      margin-bottom: 3rem;
+    }
+
+    .reservation-title {
+      font-size: 2rem;
+      font-weight: bold;
+      margin-bottom: 0.5rem;
+    }
+
+    .reservation-subtitle {
+      color: hsl(var(--muted-foreground));
+    }
+
+    .reservation-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 2rem;
+    }
+
+    @media (min-width: 768px) {
+      .reservation-grid {
+        grid-template-columns: 1fr 1fr;
+      }
+      .reservation-title {
+        font-size: 2.5rem;
+      }
+    }
+
+    .calendar-container {
+      max-width: 28rem;
+      margin: 0 auto;
+    }
+
+    .calendar-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 1.5rem;
+    }
+
+    .calendar-title {
+      font-size: 1.25rem;
+      font-weight: 600;
+    }
+
+    .calendar-btn {
+      width: 2.5rem;
+      height: 2.5rem;
+      border: 1px solid hsl(var(--border));
+      background: hsl(var(--background));
+      border-radius: var(--radius);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: background-color 0.2s;
+    }
+
+    .calendar-btn:hover {
+      background: hsl(var(--accent));
+    }
+
+    .calendar-days-header {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 0.5rem;
+      margin-bottom: 0.5rem;
+    }
+
+    .calendar-day-name {
+      text-align: center;
+      font-size: 0.875rem;
+      font-weight: 500;
+      color: hsl(var(--muted-foreground));
+    }
+
+    .calendar-days {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 0.5rem;
+    }
+
+    .calendar-day {
+      height: 3rem;
+      border: none;
+      background: transparent;
+      border-radius: var(--radius);
+      font-size: 0.875rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .calendar-day:hover:not(:disabled) {
+      background: hsl(var(--accent));
+    }
+
+    .calendar-day.selected {
+      background: hsl(var(--primary));
+      color: hsl(var(--primary-foreground));
+    }
+
+    .calendar-day.reserved {
+      background: hsl(var(--destructive) / 0.2);
+      color: hsl(var(--destructive));
+      cursor: not-allowed;
+    }
+
+    .calendar-day.past {
+      color: hsl(var(--muted-foreground));
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    .calendar-day:disabled {
+      cursor: not-allowed;
+    }
+
+    .calendar-legend {
+      margin-top: 1.5rem;
+      font-size: 0.875rem;
+    }
+
+    .calendar-legend-row {
+      display: flex;
+      gap: 1rem;
+      margin-bottom: 0.5rem;
+    }
+
+    .calendar-legend-item {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .calendar-legend-box {
+      width: 1rem;
+      height: 1rem;
+      border-radius: 0.25rem;
+    }
+
+    .legend-selected {
+      background: hsl(var(--primary));
+    }
+
+    .legend-reserved {
+      background: hsl(var(--destructive) / 0.2);
+    }
+
+    .calendar-hint {
+      color: hsl(var(--muted-foreground));
+      margin-top: 0.5rem;
+    }
+
+    .form-card {
+      background: hsl(var(--card));
+      border: 1px solid hsl(var(--border));
+      border-radius: var(--radius);
+      padding: 1.5rem;
+      max-width: 28rem;
+      margin: 0 auto;
+    }
+
+    .form-header {
+      margin-bottom: 1.5rem;
+    }
+
+    .form-title {
+      font-size: 1.5rem;
+      font-weight: 600;
+      margin-bottom: 0.25rem;
+    }
+
+    .form-description {
+      color: hsl(var(--muted-foreground));
+      font-size: 0.875rem;
+    }
+
+    .form-group {
+      margin-bottom: 1rem;
+    }
+
+    .form-label {
+      display: block;
+      font-size: 0.875rem;
+      font-weight: 500;
+      margin-bottom: 0.5rem;
+    }
+
+    .form-input {
+      width: 100%;
+      padding: 0.5rem 0.75rem;
+      border: 1px solid hsl(var(--border));
+      border-radius: var(--radius);
+      font-size: 0.875rem;
+      background: hsl(var(--background));
+      color: hsl(var(--foreground));
+    }
+
+    .form-input:focus {
+      outline: none;
+      border-color: hsl(var(--primary));
+    }
+
+    .form-input:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    .selected-dates-container {
+      margin-bottom: 1rem;
+    }
+
+    .selected-dates-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 0.5rem;
+    }
+
+    .clear-btn {
+      background: transparent;
+      border: none;
+      color: hsl(var(--foreground));
+      font-size: 0.875rem;
+      cursor: pointer;
+      padding: 0.25rem 0.5rem;
+      border-radius: var(--radius);
+    }
+
+    .clear-btn:hover:not(:disabled) {
+      background: hsl(var(--accent));
+    }
+
+    .clear-btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    .selected-dates-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+      padding: 0.75rem;
+      background: hsl(var(--muted));
+      border-radius: var(--radius);
+    }
+
+    .date-badge {
+      padding: 0.25rem 0.75rem;
+      background: hsl(var(--background));
+      border: 1px solid hsl(var(--border));
+      border-radius: var(--radius);
+      font-size: 0.875rem;
+    }
+
+    .submit-btn {
+      width: 100%;
+      padding: 0.625rem 1rem;
+      background: hsl(var(--primary));
+      color: hsl(var(--primary-foreground));
+      border: none;
+      border-radius: var(--radius);
+      font-size: 0.875rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: opacity 0.2s;
+    }
+
+    .submit-btn:hover:not(:disabled) {
+      opacity: 0.9;
+    }
+
+    .submit-btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    .toast {
+      position: fixed;
+      top: 1rem;
+      left: 50%;
+      transform: translateX(-50%);
+      background: hsl(var(--card));
+      border: 1px solid hsl(var(--border));
+      border-radius: var(--radius);
+      padding: 1rem 1.5rem;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+      z-index: 1000;
+      animation: slideDown 0.3s ease;
+    }
+
+    .toast.success {
+      border-color: hsl(142 76% 36%);
+      background: hsl(142 76% 36% / 0.1);
+    }
+
+    .toast.error {
+      border-color: hsl(var(--destructive));
+      background: hsl(var(--destructive) / 0.1);
+    }
+
+    @keyframes slideDown {
+      from {
+        opacity: 0;
+        transform: translateX(-50%) translateY(-1rem);
+      }
+      to {
+        opacity: 1;
+        transform: translateX(-50%) translateY(0);
+      }
+    }
+
+    .skeleton {
+      background: hsl(var(--muted));
+      border-radius: var(--radius);
+      animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% {
+        opacity: 1;
+      }
+      50% {
+        opacity: 0.5;
+      }
+    }
+
+    /* Ukryj kalendarz gdy używamy tylko formularza Webflow */
+    .hidden {
+      display: none !important;
+    }
+  </style>
+</head>
+<body>
+  <div id="reservation-app"></div>
+
+  <script>
+    // ========================================
+    // KONFIGURACJA
+    // ========================================
+    
+    const CONFIG = {
+      // Cloudflare Worker URL (opcjonalne - dla zapisu do Airtable)
+      workerUrl: 'https://twoj-worker.workers.dev',
+      
+      // Make.com Webhook URL (opcjonalne - dla integracji z Make.com)
+      makeWebhookUrl: 'https://hook.eu2.make.com/twoj-webhook-url',
+      
+      // Tryb działania:
+      // 'airtable' - tylko zapis do Airtable przez Cloudflare Worker
+      // 'make' - tylko wysyłka do Make.com
+      // 'both' - zapis do Airtable + wysyłka do Make.com
+      mode: 'both',
+      
+      // ID formularza Webflow (opcjonalne - jeśli chcesz integrować z istniejącym formularzem)
+      webflowFormId: null, // np. 'wf-form-Reservation-Form'
+      
+      // Czy pokazywać wbudowany kalendarz i formularz
+      showBuiltInForm: true
+    };
+
+    // ========================================
+    // STAŁE
+    // ========================================
+    
+    const MONTH_NAMES = [
+      'Styczeń', 'Luty', 'Marzec', 'Kwiecień', 'Maj', 'Czerwiec',
+      'Lipiec', 'Sierpień', 'Wrzesień', 'Październik', 'Listopad', 'Grudzień'
+    ];
+    const DAY_NAMES = ['Nd', 'Pn', 'Wt', 'Śr', 'Cz', 'Pt', 'Sb'];
+
+    // ========================================
+    // STAN APLIKACJI
+    // ========================================
+    
+    let state = {
+      currentDate: new Date(),
+      selectedDates: [],
+      reservedDates: new Set(),
+      isLoading: true,
+      isSubmitting: false,
+      name: ''
+    };
+
+    // ========================================
+    // FUNKCJE POMOCNICZE
+    // ========================================
+    
+    function showToast(message, type = 'success') {
+      const toast = document.createElement('div');
+      toast.className = `toast ${type}`;
+      toast.textContent = message;
+      document.body.appendChild(toast);
+      setTimeout(() => toast.remove(), 3000);
+    }
+
+    function formatDate(dateStr) {
+      const [year, month, day] = dateStr.split('-');
+      return `${day}.${month}.${year}`;
+    }
+
+    function formatDateShort(dateStr) {
+      const date = new Date(dateStr);
+      return date.toLocaleDateString('pl-PL', { day: 'numeric', month: 'short' });
+    }
+
+    // ========================================
+    // API FUNKCJE - AIRTABLE (przez Cloudflare Worker)
+    // ========================================
+    
+    async function getReservations() {
+      if (!CONFIG.workerUrl || CONFIG.mode === 'make') return [];
+      
+      try {
+        const response = await fetch(`${CONFIG.workerUrl}/reservations`);
+        if (!response.ok) throw new Error('Failed to fetch reservations');
+        const data = await response.json();
+        return data.records || [];
+      } catch (error) {
+        console.error('Błąd pobierania rezerwacji:', error);
+        return [];
+      }
+    }
+
+    async function addReservationToAirtable(name, dates) {
+      if (!CONFIG.workerUrl) throw new Error('Worker URL not configured');
+      
+      try {
+        const response = await fetch(`${CONFIG.workerUrl}/reservations`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ name, dates })
+        });
+        
+        if (!response.ok) throw new Error('Failed to add reservation');
+        return await response.json();
+      } catch (error) {
+        console.error('Błąd dodawania rezerwacji do Airtable:', error);
+        throw error;
+      }
+    }
+
+    // ========================================
+    // API FUNKCJE - MAKE.COM
+    // ========================================
+    
+    async function sendToMake(data) {
+      if (!CONFIG.makeWebhookUrl) throw new Error('Make webhook URL not configured');
+      
+      try {
+        const response = await fetch(CONFIG.makeWebhookUrl, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(data)
+        });
+        
+        if (!response.ok) throw new Error('Failed to send to Make.com');
+        return await response.json();
+      } catch (error) {
+        console.error('Błąd wysyłki do Make.com:', error);
+        throw error;
+      }
+    }
+
+    // ========================================
+    // PARSOWANIE ZAREZERWOWANYCH DAT
+    // ========================================
+    
+    function parseReservedDates(reservations) {
+      const dates = new Set();
+      
+      reservations.forEach(record => {
+        const name = record.fields.Name || '';
+        const dateMatches = name.match(/\d{2}\.\d{2}\.\d{4}/g);
+        
+        if (dateMatches) {
+          dateMatches.forEach(dateStr => {
+            const [day, month, year] = dateStr.split('.');
+            const isoDate = `${year}-${month}-${day}`;
+            dates.add(isoDate);
+          });
+
+          const rangeMatch = name.match(/od (\d{2}\.\d{2}\.\d{4}) do (\d{2}\.\d{2}\.\d{4})/);
+          if (rangeMatch) {
+            const [_, startStr, endStr] = rangeMatch;
+            const [startDay, startMonth, startYear] = startStr.split('.');
+            const [endDay, endMonth, endYear] = endStr.split('.');
+            
+            const startDate = new Date(`${startYear}-${startMonth}-${startDay}`);
+            const endDate = new Date(`${endYear}-${endMonth}-${endDay}`);
+            
+            const currentDate = new Date(startDate);
+            while (currentDate <= endDate) {
+              const year = currentDate.getFullYear();
+              const month = String(currentDate.getMonth() + 1).padStart(2, '0');
+              const day = String(currentDate.getDate()).padStart(2, '0');
+              dates.add(`${year}-${month}-${day}`);
+              currentDate.setDate(currentDate.getDate() + 1);
+            }
+          }
+        }
+      });
+      
+      return dates;
+    }
+
+    async function loadReservations() {
+      state.isLoading = true;
+      render();
+      
+      try {
+        const reservations = await getReservations();
+        state.reservedDates = parseReservedDates(reservations);
+      } catch (error) {
+        showToast('Nie udało się załadować rezerwacji', 'error');
+      } finally {
+        state.isLoading = false;
+        render();
+      }
+    }
+
+    // ========================================
+    // OBSŁUGA ZDARZEŃ
+    // ========================================
+    
+    function handleMonthChange(direction) {
+      const newDate = new Date(state.currentDate);
+      if (direction === 'prev') {
+        newDate.setMonth(newDate.getMonth() - 1);
+      } else {
+        newDate.setMonth(newDate.getMonth() + 1);
+      }
+      state.currentDate = newDate;
+      render();
+    }
+
+    function handleDateSelect(dateStr) {
+      const index = state.selectedDates.indexOf(dateStr);
+      if (index > -1) {
+        state.selectedDates.splice(index, 1);
+      } else {
+        state.selectedDates.push(dateStr);
+      }
+      render();
+      
+      // Aktualizuj ukryte pole w formularzu Webflow (jeśli istnieje)
+      updateWebflowFormFields();
+    }
+
+    function handleClearDates() {
+      state.selectedDates = [];
+      render();
+      updateWebflowFormFields();
+    }
+
+    async function handleSubmit(e) {
+      e.preventDefault();
+      if (state.selectedDates.length === 0 || !state.name.trim()) return;
+      
+      state.isSubmitting = true;
+      render();
+      
+      const sortedDates = state.selectedDates.sort();
+      let dateRange;
+      
+      if (sortedDates.length === 1) {
+        dateRange = formatDate(sortedDates[0]);
+      } else {
+        const firstDate = formatDate(sortedDates[0]);
+        const lastDate = formatDate(sortedDates[sortedDates.length - 1]);
+        dateRange = `od ${firstDate} do ${lastDate}`;
+      }
+      
+      const reservationData = {
+        name: state.name.trim(),
+        dates: state.selectedDates,
+        dateRange: dateRange,
+        daysCount: state.selectedDates.length,
+        timestamp: new Date().toISOString()
+      };
+      
+      try {
+        // Wysyłka do Airtable
+        if (CONFIG.mode === 'airtable' || CONFIG.mode === 'both') {
+          await addReservationToAirtable(reservationData.name, reservationData.dates);
+        }
+        
+        // Wysyłka do Make.com
+        if (CONFIG.mode === 'make' || CONFIG.mode === 'both') {
+          await sendToMake(reservationData);
+        }
+        
+        showToast(`Pomyślnie zarezerwowano ${state.selectedDates.length} ${state.selectedDates.length === 1 ? 'dzień' : 'dni'}!`, 'success');
+        state.selectedDates = [];
+        state.name = '';
+        
+        if (CONFIG.mode === 'airtable' || CONFIG.mode === 'both') {
+          await loadReservations();
+        }
+      } catch (error) {
+        showToast('Nie udało się utworzyć rezerwacji', 'error');
+      } finally {
+        state.isSubmitting = false;
+        render();
+      }
+    }
+
+    // ========================================
+    // INTEGRACJA Z FORMULARZEM WEBFLOW
+    // ========================================
+    
+    function updateWebflowFormFields() {
+      if (!CONFIG.webflowFormId) return;
+      
+      const form = document.getElementById(CONFIG.webflowFormId);
+      if (!form) return;
+      
+      // Aktualizuj ukryte pola w formularzu Webflow
+      let datesField = form.querySelector('input[name="selected-dates"]');
+      let daysCountField = form.querySelector('input[name="days-count"]');
+      
+      if (datesField) {
+        datesField.value = state.selectedDates.join(', ');
+      }
+      
+      if (daysCountField) {
+        daysCountField.value = state.selectedDates.length;
+      }
+    }
+
+    function initWebflowFormIntegration() {
+      if (!CONFIG.webflowFormId) return;
+      
+      const form = document.getElementById(CONFIG.webflowFormId);
+      if (!form) return;
+      
+      // Przechwytuj submit formularza Webflow
+      form.addEventListener('submit', async function(e) {
+        if (state.selectedDates.length === 0) {
+          e.preventDefault();
+          showToast('Wybierz przynajmniej jedną datę z kalendarza', 'error');
+          return;
+        }
+        
+        // Dodaj dane z kalendarza do formularza
+        const formData = new FormData(form);
+        const name = formData.get('name') || formData.get('imie') || '';
+        
+        const sortedDates = state.selectedDates.sort();
+        let dateRange;
+        
+        if (sortedDates.length === 1) {
+          dateRange = formatDate(sortedDates[0]);
+        } else {
+          const firstDate = formatDate(sortedDates[0]);
+          const lastDate = formatDate(sortedDates[sortedDates.length - 1]);
+          dateRange = `od ${firstDate} do ${lastDate}`;
+        }
+        
+        const reservationData = {
+          name: name,
+          dates: state.selectedDates,
+          dateRange: dateRange,
+          daysCount: state.selectedDates.length,
+          timestamp: new Date().toISOString(),
+          formData: Object.fromEntries(formData)
+        };
+        
+        // Wysyłka do Make.com (jeśli skonfigurowane)
+        if (CONFIG.makeWebhookUrl && (CONFIG.mode === 'make' || CONFIG.mode === 'both')) {
+          try {
+            await sendToMake(reservationData);
+          } catch (error) {
+            console.error('Błąd wysyłki do Make.com:', error);
+          }
+        }
+        
+        // Wysyłka do Airtable (jeśli skonfigurowane)
+        if (CONFIG.workerUrl && (CONFIG.mode === 'airtable' || CONFIG.mode === 'both')) {
+          try {
+            await addReservationToAirtable(name, state.selectedDates);
+          } catch (error) {
+            console.error('Błąd zapisu do Airtable:', error);
+          }
+        }
+      });
+    }
+
+    // ========================================
+    // RENDEROWANIE
+    // ========================================
+    
+    function renderCalendar() {
+      if (state.isLoading) {
+        return `
+          <div class="calendar-container">
+            <div class="skeleton" style="height: 2rem; margin-bottom: 1.5rem;"></div>
+            <div class="skeleton" style="height: 20rem;"></div>
+          </div>
+        `;
+      }
+
+      const year = state.currentDate.getFullYear();
+      const month = state.currentDate.getMonth();
+      const firstDay = new Date(year, month, 1);
+      const lastDay = new Date(year, month + 1, 0);
+      const daysInMonth = lastDay.getDate();
+      const startingDayOfWeek = firstDay.getDay();
+
+      let daysHtml = '';
+      for (let i = 0; i < startingDayOfWeek; i++) {
+        daysHtml += '<div class="calendar-day"></div>';
+      }
+
+      for (let day = 1; day <= daysInMonth; day++) {
+        const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+        const isReserved = state.reservedDates.has(dateStr);
+        const isSelected = state.selectedDates.includes(dateStr);
+        const isPast = new Date(dateStr) < new Date(new Date().setHours(0, 0, 0, 0));
+        
+        let className = 'calendar-day';
+        if (isSelected) className += ' selected';
+        if (isReserved) className += ' reserved';
+        if (isPast && !isReserved) className += ' past';
+        
+        const disabled = isReserved || isPast;
+        
+        daysHtml += `
+          <button 
+            class="${className}" 
+            onclick="handleDateSelect('${dateStr}')"
+            ${disabled ? 'disabled' : ''}
+          >
+            ${day}
+          </button>
+        `;
+      }
+
+      return `
+        <div class="calendar-container">
+          <div class="calendar-header">
+            <button class="calendar-btn" onclick="handleMonthChange('prev')">
+              ‹
+            </button>
+            <h2 class="calendar-title">${MONTH_NAMES[month]} ${year}</h2>
+            <button class="calendar-btn" onclick="handleMonthChange('next')">
+              ›
+            </button>
+          </div>
+          
+          <div class="calendar-days-header">
+            ${DAY_NAMES.map(day => `<div class="calendar-day-name">${day}</div>`).join('')}
+          </div>
+          
+          <div class="calendar-days">
+            ${daysHtml}
+          </div>
+          
+          <div class="calendar-legend">
+            <div class="calendar-legend-row">
+              <div class="calendar-legend-item">
+                <div class="calendar-legend-box legend-selected"></div>
+                <span>Wybrane (${state.selectedDates.length})</span>
+              </div>
+              <div class="calendar-legend-item">
+                <div class="calendar-legend-box legend-reserved"></div>
+                <span>Zajęte</span>
+              </div>
+            </div>
+            <p class="calendar-hint">Kliknij na dni, aby wybrać wiele terminów</p>
+          </div>
+        </div>
+      `;
+    }
+
+    function renderForm() {
+      const sortedDates = [...state.selectedDates].sort();
+      const selectedDatesHtml = state.selectedDates.length > 0 ? `
+        <div class="selected-dates-container">
+          <div class="selected-dates-header">
+            <label class="form-label">Wybrane daty:</label>
+            <button 
+              type="button" 
+              class="clear-btn" 
+              onclick="handleClearDates()"
+              ${state.isSubmitting ? 'disabled' : ''}
+            >
+              Wyczyść wszystkie
+            </button>
+          </div>
+          <div class="selected-dates-list">
+            ${sortedDates.map(date => `<span class="date-badge">${formatDateShort(date)}</span>`).join('')}
+          </div>
+        </div>
+      ` : '';
+
+      return `
+        <div class="form-card">
+          <div class="form-header">
+            <h2 class="form-title">Formularz rezerwacji</h2>
+            <p class="form-description">
+              ${state.selectedDates.length > 0 
+                ? `Wybrano ${state.selectedDates.length} ${state.selectedDates.length === 1 ? 'dzień' : 'dni'}`
+                : 'Wybierz daty z kalendarza'}
+            </p>
+          </div>
+          
+          <form onsubmit="handleSubmit(event)">
+            ${selectedDatesHtml}
+            
+            <div class="form-group">
+              <label class="form-label" for="name">Imię i nazwisko</label>
+              <input
+                id="name"
+                type="text"
+                class="form-input"
+                placeholder="Wpisz swoje imię i nazwisko"
+                value="${state.name}"
+                oninput="state.name = this.value"
+                ${state.selectedDates.length === 0 || state.isSubmitting ? 'disabled' : ''}
+                required
+              />
+            </div>
+            
+            <button 
+              type="submit" 
+              class="submit-btn"
+              ${state.selectedDates.length === 0 || !state.name.trim() || state.isSubmitting ? 'disabled' : ''}
+            >
+              ${state.isSubmitting ? 'Rezerwuję...' : `Zarezerwuj ${state.selectedDates.length > 0 ? `(${state.selectedDates.length})` : ''}`}
+            </button>
+          </form>
+        </div>
+      `;
+    }
+
+    function render() {
+      const app = document.getElementById('reservation-app');
+      
+      if (!CONFIG.showBuiltInForm) {
+        app.innerHTML = `
+          <div class="reservation-container">
+            <div class="reservation-grid">
+              <div>${renderCalendar()}</div>
+            </div>
+          </div>
+        `;
+      } else {
+        app.innerHTML = `
+          <div class="reservation-container">
+            <div class="reservation-header">
+              <h1 class="reservation-title">System Rezerwacji</h1>
+              <p class="reservation-subtitle">Wybierz dostępne terminy i zarezerwuj swoją wizytę</p>
+            </div>
+            
+            <div class="reservation-grid">
+              <div>${renderCalendar()}</div>
+              <div>${renderForm()}</div>
+            </div>
+          </div>
+        `;
+      }
+    }
+
+    // ========================================
+    // INICJALIZACJA
+    // ========================================
+    
+    window.addEventListener('DOMContentLoaded', function() {
+      loadReservations();
+      initWebflowFormIntegration();
+    });
+
+    // Eksportuj funkcje globalnie dla dostępu z Webflow
+    window.ReservationCalendar = {
+      getSelectedDates: () => state.selectedDates,
+      getSelectedDatesCount: () => state.selectedDates.length,
+      getDateRange: () => {
+        if (state.selectedDates.length === 0) return '';
+        const sorted = state.selectedDates.sort();
+        if (sorted.length === 1) return formatDate(sorted[0]);
+        return `od ${formatDate(sorted[0])} do ${formatDate(sorted[sorted.length - 1])}`;
+      },
+      clearDates: handleClearDates
+    };
+  </script>
+</body>
+</html>
+
+
+
+
+
+---------------------------------------
+# 🔗 Integracja kalendarza z Webflow i Make.com
+
+## 📋 Spis treści
+1. [Konfiguracja podstawowa](#konfiguracja-podstawowa)
+2. [Metoda 1: Wbudowany formularz](#metoda-1-wbudowany-formularz)
+3. [Metoda 2: Integracja z formularzem Webflow](#metoda-2-integracja-z-formularzem-webflow)
+4. [Konfiguracja Make.com](#konfiguracja-makecom)
+5. [Przykłady użycia](#przykłady-użycia)
+
+---
+
+## 🔧 Konfiguracja podstawowa
+
+W pliku `webflow-embed.html` znajdź obiekt `CONFIG` (około linii 385) i skonfiguruj:
+
+```javascript
+const CONFIG = {
+  // URL Cloudflare Worker (dla zapisu do Airtable)
+  workerUrl: 'https://twoj-worker.workers.dev',
+  
+  // URL Webhook Make.com
+  makeWebhookUrl: 'https://hook.eu2.make.com/twoj-webhook-url',
+  
+  // Tryb działania:
+  // 'airtable' - tylko zapis do Airtable
+  // 'make' - tylko wysyłka do Make.com
+  // 'both' - zapis do Airtable + wysyłka do Make.com
+  mode: 'both',
+  
+  // ID formularza Webflow (opcjonalne)
+  webflowFormId: null,
+  
+  // Czy pokazywać wbudowany kalendarz i formularz
+  showBuiltInForm: true
+};
+```
+
+---
+
+## 📝 Metoda 1: Wbudowany formularz (najprostsza)
+
+### Krok 1: Skonfiguruj Make.com webhook
+
+1. Zaloguj się do **Make.com**
+2. Utwórz nowy scenariusz
+3. Dodaj moduł **Webhooks → Custom webhook**
+4. Skopiuj URL webhooka (np. `https://hook.eu2.make.com/abc123xyz`)
+
+### Krok 2: Zaktualizuj konfigurację
+
+```javascript
+const CONFIG = {
+  workerUrl: 'https://twoj-worker.workers.dev',
+  makeWebhookUrl: 'https://hook.eu2.make.com/abc123xyz', // ← Twój webhook
+  mode: 'both', // Zapis do Airtable + Make.com
+  webflowFormId: null,
+  showBuiltInForm: true // ← Pokazuj wbudowany formularz
+};
+```
+
+### Krok 3: Wklej do Webflow
+
+1. W Webflow dodaj element **Embed**
+2. Wklej całą zawartość `webflow-embed.html`
+3. Opublikuj stronę
+
+### ✅ Gotowe!
+
+Kalendarz z formularzem będzie działał i wysyłał dane do Make.com w formacie:
+
+```json
+{
+  "name": "Jan Kowalski",
+  "dates": ["2026-01-14", "2026-01-15", "2026-01-16"],
+  "dateRange": "od 14.01.2026 do 16.01.2026",
+  "daysCount": 3,
+  "timestamp": "2026-01-13T10:30:00.000Z"
+}
+```
+
+---
+
+## 🎨 Metoda 2: Integracja z formularzem Webflow
+
+### Scenariusz użycia:
+Masz już gotowy formularz w Webflow i chcesz dodać do niego kalendarz do wyboru dat.
+
+### Krok 1: Przygotuj formularz w Webflow
+
+Stwórz formularz z następującymi polami:
+
+```html
+<!-- Formularz w Webflow Designer -->
+<form id="wf-form-Reservation-Form" name="wf-form-Reservation-Form">
+  
+  <!-- Pole: Imię i nazwisko -->
+  <input type="text" name="name" placeholder="Imię i nazwisko" required>
+  
+  <!-- Pole: Email -->
+  <input type="email" name="email" placeholder="Email" required>
+  
+  <!-- Pole: Telefon -->
+  <input type="tel" name="phone" placeholder="Telefon">
+  
+  <!-- UKRYTE POLA dla danych z kalendarza -->
+  <input type="hidden" name="selected-dates" value="">
+  <input type="hidden" name="days-count" value="">
+  
+  <button type="submit">Wyślij rezerwację</button>
+</form>
+```
+
+### Krok 2: Zaktualizuj konfigurację
+
+```javascript
+const CONFIG = {
+  workerUrl: 'https://twoj-worker.workers.dev',
+  makeWebhookUrl: 'https://hook.eu2.make.com/abc123xyz',
+  mode: 'both',
+  webflowFormId: 'wf-form-Reservation-Form', // ← ID twojego formularza
+  showBuiltInForm: false // ← Ukryj wbudowany formularz, użyj tylko kalendarza
+};
+```
+
+### Krok 3: Umieść kalendarz obok formularza
+
+W Webflow:
+
+1. Dodaj **2-kolumnowy layout**
+2. W lewej kolumnie: **Embed** z kalendarzem
+3. W prawej kolumnie: Twój formularz Webflow
+
+### Krok 4: Dodaj Custom Code do formularza (opcjonalne)
+
+Jeśli chcesz walidować czy użytkownik wybrał daty:
+
+```html
+<script>
+  // Dodaj do Page Settings → Before </body> tag
+  document.getElementById('wf-form-Reservation-Form').addEventListener('submit', function(e) {
+    const datesField = this.querySelector('input[name="selected-dates"]');
+    
+    if (!datesField.value || datesField.value === '') {
+      e.preventDefault();
+      alert('Proszę wybrać daty z kalendarza!');
+      return false;
+    }
+  });
+</script>
+```
+
+### ✅ Jak to działa:
+
+1. Użytkownik wybiera daty w kalendarzu
+2. Kalendarz automatycznie aktualizuje ukryte pola w formularzu Webflow
+3. Użytkownik wypełnia formularz (imię, email, telefon)
+4. Po kliknięciu "Wyślij" dane idą do Make.com w formacie:
+
+```json
+{
+  "name": "Jan Kowalski",
+  "dates": ["2026-01-14", "2026-01-15", "2026-01-16"],
+  "dateRange": "od 14.01.2026 do 16.01.2026",
+  "daysCount": 3,
+  "timestamp": "2026-01-13T10:30:00.000Z",
+  "formData": {
+    "name": "Jan Kowalski",
+    "email": "jan@example.com",
+    "phone": "+48 123 456 789",
+    "selected-dates": "2026-01-14, 2026-01-15, 2026-01-16",
+    "days-count": "3"
+  }
+}
+```
+
+---
+
+## 🔗 Konfiguracja Make.com
+
+### Krok 1: Utwórz scenariusz
+
+1. **Webhooks → Custom webhook**
+   - Skopiuj URL webhooka
+
+2. **Router** (opcjonalnie - jeśli chcesz różne akcje)
+
+3. **Akcje** (wybierz co chcesz zrobić z danymi):
+   - **Airtable → Create a record** - zapisz do Airtable
+   - **Google Sheets → Add a row** - zapisz do arkusza
+   - **Email → Send an email** - wyślij email z potwierdzeniem
+   - **Slack → Send a message** - powiadomienie na Slacku
+   - **HTTP → Make a request** - wyślij do innego API
+
+### Krok 2: Przykładowy scenariusz Make.com
+
+```
+Webhook (otrzymaj dane)
+  ↓
+Router
+  ├─→ Airtable: Zapisz rezerwację
+  ├─→ Gmail: Wyślij email do klienta
+  └─→ Slack: Powiadom zespół
+```
+
+### Krok 3: Mapowanie danych w Make.com
+
+Dane które otrzymasz w webhook:
+
+| Pole | Opis | Przykład |
+|------|------|----------|
+| `name` | Imię i nazwisko | "Jan Kowalski" |
+| `dates` | Tablica wybranych dat | ["2026-01-14", "2026-01-15"] |
+| `dateRange` | Zakres dat (czytelny) | "od 14.01.2026 do 16.01.2026" |
+| `daysCount` | Liczba dni | 3 |
+| `timestamp` | Czas rezerwacji | "2026-01-13T10:30:00.000Z" |
+| `formData.*` | Dodatkowe pola z formularza | email, phone, etc. |
+
+---
+
+## 📊 Przykłady użycia
+
+### Przykład 1: Tylko Make.com (bez Airtable)
+
+```javascript
+const CONFIG = {
+  workerUrl: null, // Nie używamy Cloudflare Worker
+  makeWebhookUrl: 'https://hook.eu2.make.com/abc123xyz',
+  mode: 'make', // Tylko Make.com
+  webflowFormId: null,
+  showBuiltInForm: true
+};
+```
+
+### Przykład 2: Kalendarz + istniejący formularz Webflow
+
+```javascript
+const CONFIG = {
+  workerUrl: 'https://rezerwacje.workers.dev',
+  makeWebhookUrl: 'https://hook.eu2.make.com/abc123xyz',
+  mode: 'both',
+  webflowFormId: 'wf-form-Reservation-Form', // ID formularza
+  showBuiltInForm: false // Tylko kalendarz, bez wbudowanego formularza
+};
+```
+
+### Przykład 3: Pełna integracja (Airtable + Make.com)
+
+```javascript
+const CONFIG = {
+  workerUrl: 'https://rezerwacje.workers.dev',
+  makeWebhookUrl: 'https://hook.eu2.make.com/abc123xyz',
+  mode: 'both', // Zapis do Airtable + wysyłka do Make.com
+  webflowFormId: null,
+  showBuiltInForm: true
+};
+```
+
+---
+
+## 🎯 Dostęp do kalendarza z JavaScript (dla zaawansowanych)
+
+Kalendarz eksportuje API globalne:
+
+```javascript
+// Pobierz wybrane daty
+const dates = window.ReservationCalendar.getSelectedDates();
+// ["2026-01-14", "2026-01-15", "2026-01-16"]
+
+// Pobierz liczbę wybranych dni
+const count = window.ReservationCalendar.getSelectedDatesCount();
+// 3
+
+// Pobierz zakres dat (czytelny format)
+const range = window.ReservationCalendar.getDateRange();
+// "od 14.01.2026 do 16.01.2026"
+
+// Wyczyść wybrane daty
+window.ReservationCalendar.clearDates();
+```
+
+### Przykład: Dynamiczna aktualizacja pola w formularzu
+
+```javascript
+// Dodaj do Custom Code w Webflow
+setInterval(function() {
+  const datesDisplay = document.getElementById('selected-dates-display');
+  if (datesDisplay) {
+    const range = window.ReservationCalendar.getDateRange();
+    datesDisplay.textContent = range || 'Nie wybrano dat';
+  }
+}, 500);
+```
+
+---
+
+## 🔒 Bezpieczeństwo
+
+### ⚠️ WAŻNE:
+
+- **Make.com webhook URL** będzie widoczny w kodzie źródłowym
+- Aby zabezpieczyć webhook:
+  1. W Make.com dodaj **walidację** (np. sprawdzaj timestamp)
+  2. Dodaj **rate limiting** w scenariuszu
+  3. Użyj **IP whitelisting** (jeśli Make.com to wspiera)
+
+### Zalecane zabezpieczenia w Make.com:
+
+```
+Webhook
+  ↓
+Filter: Sprawdź czy timestamp nie jest starszy niż 5 minut
+  ↓
+Router (akcje)
+```
+
+---
+
+## 🆘 Rozwiązywanie problemów
+
+### Problem: Dane nie docierają do Make.com
+
+**Rozwiązanie:**
+1. Sprawdź URL webhooka w konfiguracji
+2. Otwórz Console przeglądarki (F12) i sprawdź błędy
+3. W Make.com sprawdź **History** webhooka
+
+### Problem: Formularz Webflow nie jest rozpoznawany
+
+**Rozwiązanie:**
+1. Sprawdź ID formularza (prawy klik → Inspect → znajdź `id="..."`)
+2. Upewnij się że ID jest poprawne w `CONFIG.webflowFormId`
+3. Dodaj ukryte pola `selected-dates` i `days-count`
+
+### Problem: Kalendarz nie aktualizuje pól formularza
+
+**Rozwiązanie:**
+1. Upewnij się że formularz ma poprawne ID
+2. Sprawdź czy ukryte pola mają poprawne atrybuty `name`
+3. Zobacz Console (F12) czy są błędy JavaScript
+
+---
+
+## ✅ Checklist wdrożenia
+
+- [ ] Skonfigurowano Make.com webhook
+- [ ] Zaktualizowano `CONFIG.makeWebhookUrl`
+- [ ] Wybrano odpowiedni `mode` (airtable/make/both)
+- [ ] Jeśli integracja z formularzem: ustawiono `webflowFormId`
+- [ ] Dodano ukryte pola do formularza Webflow
+- [ ] Przetestowano wysyłkę danych
+- [ ] Sprawdzono History w Make.com
+- [ ] Skonfigurowano akcje w scenariuszu Make.com
+
+---
+
+## 🚀 Gotowe!
+
+Twój kalendarz jest teraz zintegrowany z Webflow i Make.com! 
+
+Pytania? Sprawdź logi w:
+- Console przeglądarki (F12)
+- Make.com → Scenario → History
+- Cloudflare Workers → Logs (jeśli używasz)
+
+
+--------------------------------------------
+
+// Cloudflare Worker - Proxy dla Airtable API
+// Wdróż ten kod na workers.cloudflare.com
+
+// ⚠️ KONFIGURACJA - Ustaw te zmienne w Cloudflare Workers Dashboard -> Settings -> Variables
+// AIRTABLE_BASE_ID - Twój Base ID z Airtable
+// AIRTABLE_TABLE_ID - Nazwa lub ID tabeli
+// AIRTABLE_API_KEY - Twój Personal Access Token (jako Secret!)
+
+addEventListener('fetch', event => {
+  event.respondWith(handleRequest(event.request))
+})
+
+async function handleRequest(request) {
+  // CORS headers
+  const corsHeaders = {
+    'Access-Control-Allow-Origin': '*', // Zmień na swoją domenę dla większego bezpieczeństwa
+    'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+    'Access-Control-Allow-Headers': 'Content-Type',
+  }
+
+  // Obsługa preflight request
+  if (request.method === 'OPTIONS') {
+    return new Response(null, { headers: corsHeaders })
+  }
+
+  const url = new URL(request.url)
+  
+  try {
+    // GET /reservations - Pobierz wszystkie rezerwacje
+    if (url.pathname === '/reservations' && request.method === 'GET') {
+      const airtableUrl = `https://api.airtable.com/v0/${AIRTABLE_BASE_ID}/${AIRTABLE_TABLE_ID}`
+      
+      const response = await fetch(airtableUrl, {
+        headers: {
+          'Authorization': `Bearer ${AIRTABLE_API_KEY}`
+        }
+      })
+      
+      const data = await response.json()
+      
+      return new Response(JSON.stringify(data), {
+        headers: {
+          ...corsHeaders,
+          'Content-Type': 'application/json'
+        }
+      })
+    }
+    
+    // POST /reservations - Dodaj nową rezerwację
+    if (url.pathname === '/reservations' && request.method === 'POST') {
+      const body = await request.json()
+      const { name, dates } = body
+      
+      if (!name || !dates || !Array.isArray(dates)) {
+        return new Response(JSON.stringify({ error: 'Invalid request body' }), {
+          status: 400,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        })
+      }
+      
+      // Formatowanie dat
+      const sortedDates = dates.sort()
+      let dateRange
+      
+      if (sortedDates.length === 1) {
+        dateRange = formatDate(sortedDates[0])
+      } else {
+        const firstDate = formatDate(sortedDates[0])
+        const lastDate = formatDate(sortedDates[sortedDates.length - 1])
+        dateRange = `od ${firstDate} do ${lastDate}`
+      }
+      
+      const airtableUrl = `https://api.airtable.com/v0/${AIRTABLE_BASE_ID}/${AIRTABLE_TABLE_ID}`
+      
+      const response = await fetch(airtableUrl, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${AIRTABLE_API_KEY}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          fields: {
+            Name: `${name} ${dateRange}`
+          }
+        })
+      })
+      
+      const data = await response.json()
+      
+      return new Response(JSON.stringify(data), {
+        headers: {
+          ...corsHeaders,
+          'Content-Type': 'application/json'
+        }
+      })
+    }
+    
+    return new Response('Not Found', { 
+      status: 404,
+      headers: corsHeaders
+    })
+    
+  } catch (error) {
+    return new Response(JSON.stringify({ error: error.message }), {
+      status: 500,
+      headers: {
+        ...corsHeaders,
+        'Content-Type': 'application/json'
+      }
+    })
+  }
+}
+
+function formatDate(dateStr) {
+  const [year, month, day] = dateStr.split('-')
+  return `${day}.${month}.${year}`
+}
